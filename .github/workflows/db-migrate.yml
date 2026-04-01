@@ -1,0 +1,55 @@
+name: Database Migration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/prisma/schema.prisma'
+      - 'backend/prisma/seed.ts'
+      - '.github/workflows/db-migrate.yml'
+  workflow_dispatch:  # allows manual trigger from GitHub UI
+
+jobs:
+  migrate:
+    name: Push schema to Neon + Seed
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Push schema to Neon
+        working-directory: backend
+        run: npx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Seed database with demo data
+        working-directory: backend
+        run: npx ts-node prisma/seed.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Verify connection
+        working-directory: backend
+        run: |
+          npx prisma db execute --stdin <<SQL
+          SELECT COUNT(*) as user_count FROM users;
+          SELECT COUNT(*) as loan_count FROM loans;
+          SQL
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
