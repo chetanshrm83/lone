@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "dist/main.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/v1/(.*)",
+      "dest": "dist/main.js"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": "@finguardian_database_url",
+    "JWT_SECRET": "@finguardian_jwt_secret",
+    "OPENAI_API_KEY": "@finguardian_openai_key",
+    "FRONTEND_URL": "@finguardian_frontend_url"
+  }
+}

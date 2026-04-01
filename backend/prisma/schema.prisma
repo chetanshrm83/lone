@@ -1,0 +1,163 @@
+// FinGuardian AI - Prisma Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String      @id @default(cuid())
+  name          String
+  email         String      @unique
+  password      String
+  monthlyIncome Float       @default(0)
+  riskProfile   RiskProfile @default(MODERATE)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  loans             Loan[]
+  transactions      Transaction[]
+  investments       Investment[]
+  communicationLogs CommunicationLog[]
+  aiConversations   AiConversation[]
+  reminderJobs      ReminderJob[]
+  @@map("users")
+}
+
+enum RiskProfile { CONSERVATIVE MODERATE AGGRESSIVE }
+
+model Loan {
+  id                String     @id @default(cuid())
+  userId            String
+  loanName          String
+  lenderName        String?
+  totalAmount       Float
+  outstandingAmount Float
+  interestRate      Float
+  emiAmount         Float
+  dueDate           DateTime
+  overdueDays       Int        @default(0)
+  penaltyRate       Float      @default(0)
+  loanType          LoanType   @default(PERSONAL)
+  status            LoanStatus @default(ACTIVE)
+  priorityScore     Float      @default(0)
+  notes             String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emiHistory EmiPayment[]
+  @@map("loans")
+}
+
+enum LoanType   { PERSONAL HOME VEHICLE EDUCATION CREDIT_CARD BUSINESS OTHER }
+enum LoanStatus { ACTIVE OVERDUE PAID RESTRUCTURED }
+
+model EmiPayment {
+  id        String        @id @default(cuid())
+  loanId    String
+  amount    Float
+  paidOn    DateTime
+  status    PaymentStatus @default(PAID)
+  note      String?
+  createdAt DateTime      @default(now())
+  loan      Loan          @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  @@map("emi_payments")
+}
+
+enum PaymentStatus { PAID PARTIAL MISSED }
+
+model Transaction {
+  id          String          @id @default(cuid())
+  userId      String
+  type        TransactionType
+  amount      Float
+  category    String
+  description String?
+  date        DateTime
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("transactions")
+}
+
+enum TransactionType { INCOME EXPENSE }
+
+model Investment {
+  id             String         @id @default(cuid())
+  userId         String
+  name           String
+  type           InvestmentType
+  monthlyAmount  Float
+  expectedReturn Float          @default(12)
+  duration       Int
+  startDate      DateTime       @default(now())
+  maturityAmount Float?
+  notes          String?
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("investments")
+}
+
+enum InvestmentType { SIP FD PPF ELSS NSC RD GOLD OTHER }
+
+model CommunicationLog {
+  id          String            @id @default(cuid())
+  userId      String
+  type        CommunicationType
+  source      String
+  content     String            @db.Text
+  tone        ScriptTone?
+  isIncoming  Boolean           @default(true)
+  exportReady Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("communication_logs")
+}
+
+enum CommunicationType { CALL EMAIL SMS GENERATED_SCRIPT }
+enum ScriptTone        { POLITE FIRM LEGAL_AWARE }
+
+model AiConversation {
+  id        String      @id @default(cuid())
+  userId    String
+  title     String      @default("New Conversation")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  AiMessage[]
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String         @db.Text
+  tokensUsed     Int?
+  createdAt      DateTime       @default(now())
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  @@map("ai_messages")
+}
+
+enum MessageRole { USER ASSISTANT SYSTEM }
+
+model ReminderJob {
+  id          String    @id @default(cuid())
+  userId      String
+  jobType     JobType
+  scheduledAt DateTime
+  payload     Json
+  status      JobStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("reminder_jobs")
+}
+
+enum JobType   { EMI_REMINDER OVERDUE_ALERT INVESTMENT_DIGEST TAX_REMINDER }
+enum JobStatus { PENDING SENT FAILED CANCELLED }
