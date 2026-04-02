@@ -1,4 +1,5 @@
 // FinGuardian AI - Prisma Schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -24,10 +25,15 @@ model User {
   communicationLogs CommunicationLog[]
   aiConversations   AiConversation[]
   reminderJobs      ReminderJob[]
+
   @@map("users")
 }
 
-enum RiskProfile { CONSERVATIVE MODERATE AGGRESSIVE }
+enum RiskProfile {
+  CONSERVATIVE
+  MODERATE
+  AGGRESSIVE
+}
 
 model Loan {
   id                String     @id @default(cuid())
@@ -50,11 +56,26 @@ model Loan {
 
   user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   emiHistory EmiPayment[]
+
   @@map("loans")
 }
 
-enum LoanType   { PERSONAL HOME VEHICLE EDUCATION CREDIT_CARD BUSINESS OTHER }
-enum LoanStatus { ACTIVE OVERDUE PAID RESTRUCTURED }
+enum LoanType {
+  PERSONAL
+  HOME
+  VEHICLE
+  EDUCATION
+  CREDIT_CARD
+  BUSINESS
+  OTHER
+}
+
+enum LoanStatus {
+  ACTIVE
+  OVERDUE
+  PAID
+  RESTRUCTURED
+}
 
 model EmiPayment {
   id        String        @id @default(cuid())
@@ -64,11 +85,17 @@ model EmiPayment {
   status    PaymentStatus @default(PAID)
   note      String?
   createdAt DateTime      @default(now())
-  loan      Loan          @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
   @@map("emi_payments")
 }
 
-enum PaymentStatus { PAID PARTIAL MISSED }
+enum PaymentStatus {
+  PAID
+  PARTIAL
+  MISSED
+}
 
 model Transaction {
   id          String          @id @default(cuid())
@@ -80,11 +107,16 @@ model Transaction {
   date        DateTime
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("transactions")
 }
 
-enum TransactionType { INCOME EXPENSE }
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
 
 model Investment {
   id             String         @id @default(cuid())
@@ -100,11 +132,22 @@ model Investment {
   isActive       Boolean        @default(true)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("investments")
 }
 
-enum InvestmentType { SIP FD PPF ELSS NSC RD GOLD OTHER }
+enum InvestmentType {
+  SIP
+  FD
+  PPF
+  ELSS
+  NSC
+  RD
+  GOLD
+  OTHER
+}
 
 model CommunicationLog {
   id          String            @id @default(cuid())
@@ -116,12 +159,24 @@ model CommunicationLog {
   isIncoming  Boolean           @default(true)
   exportReady Boolean           @default(false)
   createdAt   DateTime          @default(now())
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("communication_logs")
 }
 
-enum CommunicationType { CALL EMAIL SMS GENERATED_SCRIPT }
-enum ScriptTone        { POLITE FIRM LEGAL_AWARE }
+enum CommunicationType {
+  CALL
+  EMAIL
+  SMS
+  GENERATED_SCRIPT
+}
+
+enum ScriptTone {
+  POLITE
+  FIRM
+  LEGAL_AWARE
+}
 
 model AiConversation {
   id        String      @id @default(cuid())
@@ -129,8 +184,10 @@ model AiConversation {
   title     String      @default("New Conversation")
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages  AiMessage[]
+
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages AiMessage[]
+
   @@map("ai_conversations")
 }
 
@@ -141,11 +198,17 @@ model AiMessage {
   content        String         @db.Text
   tokensUsed     Int?
   createdAt      DateTime       @default(now())
-  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
   @@map("ai_messages")
 }
 
-enum MessageRole { USER ASSISTANT SYSTEM }
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
 
 model ReminderJob {
   id          String    @id @default(cuid())
@@ -155,9 +218,22 @@ model ReminderJob {
   payload     Json
   status      JobStatus @default(PENDING)
   createdAt   DateTime  @default(now())
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("reminder_jobs")
 }
 
-enum JobType   { EMI_REMINDER OVERDUE_ALERT INVESTMENT_DIGEST TAX_REMINDER }
-enum JobStatus { PENDING SENT FAILED CANCELLED }
+enum JobType {
+  EMI_REMINDER
+  OVERDUE_ALERT
+  INVESTMENT_DIGEST
+  TAX_REMINDER
+}
+
+enum JobStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
